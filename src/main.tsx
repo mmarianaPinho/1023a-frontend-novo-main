@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import Carrinho from './Carrinho'
 import Login from './componentes/login/login.tsx'
+import ListaProdutos from './Listarprodutos.tsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 createRoot(document.getElementById('root')!).render(
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App/>} />
           <Route path="/login" element={<Login/>} />
           <Route path="/carrinho" element={<Carrinho />} />
+          <Route path="/produtos" element={<ListaProdutos />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

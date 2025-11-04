@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "./api/api";
 import { useNavigate } from "react-router-dom";
+import "./App.css";
 
 type ProdutoType = {
   _id: string;
