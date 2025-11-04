@@ -32,13 +32,6 @@ export default function Carrinho() {
   }, [navigate])
 
   const atualizarQuantidade = (id: string, novaQtd: number) => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      alert("Você precisa estar logado.")
-      navigate("/login")
-      return
-    }
-
     api.put(`/carrinho/${id}`, { quantidade: novaQtd })
       .then(() => {
         setItens(itens.map(item =>
@@ -49,26 +42,12 @@ export default function Carrinho() {
   }
 
   const removerItem = (produtoId: string) => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      alert("Você precisa estar logado.")
-      navigate("/login")
-      return
-    }
-
     api.delete(`/carrinho/${produtoId}`)
       .then(() => setItens(itens.filter(item => item.produto._id !== produtoId)))
       .catch(() => alert("Erro ao remover item"))
   }
 
   const limparCarrinho = () => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      alert("Você precisa estar logado.")
-      navigate("/login")
-      return
-    }
-
     api.delete("/carrinho")
       .then(() => setItens([]))
       .catch(() => alert("Erro ao limpar carrinho"))

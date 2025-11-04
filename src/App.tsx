@@ -1,107 +1,100 @@
-import React, { useState, useEffect } from 'react'
-import './App.css'
-import api from './api/api'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from "react";
+import api from "./api/api";
+import { useNavigate } from "react-router-dom";
 
 type ProdutoType = {
-  _id: string
-  nome: string
-  preco: number
-  descricao: string
-  urlfoto: string
-}
+  _id: string;
+  nome: string;
+  preco: number;
+  descricao: string;
+  urlfoto: string;
+};
 
 function App() {
-  const navigate = useNavigate()
-  const token = localStorage.getItem("token")
-  const [produtos, setProdutos] = useState<ProdutoType[]>([])
+  const navigate = useNavigate();
+  const [produtos, setProdutos] = useState<ProdutoType[]>([]);
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
+  // 🔹 Atualiza o token quando o usuário faz login/logout
   useEffect(() => {
-    api.get("/produtos")
-      .then((response) => setProdutos(response.data))
-      .catch(() => alert("Erro ao carregar produtos"))
-  }, [])
+    const atualizarToken = () => setToken(localStorage.getItem("token"));
+    window.addEventListener("storage", atualizarToken);
+    return () => window.removeEventListener("storage", atualizarToken);
+  }, []);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  // 🔹 Carregar produtos
+  useEffect(() => {
+    api
+      .get("/produtos")
+      .then((res) => setProdutos(res.data))
+      .catch(() => alert("Erro ao carregar produtos"));
+  }, []);
+
+  // 🔹 Adicionar item ao carrinho (só se estiver logado)
+  const adicionarItemCarrinho = async (produtoId: string) => {
     if (!token) {
-      alert("Você precisa estar logado para cadastrar produtos.")
-      navigate("/login")
-      return
+      alert("Você precisa estar logado para adicionar produtos ao carrinho!");
+      navigate("/login");
+      return;
     }
 
-    const formData = new FormData(event.currentTarget)
-    const produto = {
-      nome: formData.get("nome"),
-      preco: formData.get("preco"),
-      descricao: formData.get("descricao"),
-      urlfoto: formData.get("urlfoto")
+    try {
+      await api.post(
+        "/adicionarItem",
+        { produtoId, quantidade: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Produto adicionado ao carrinho!");
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        alert("Sessão expirada. Faça login novamente.");
+        navigate("/login");
+      } else {
+        alert("Erro ao adicionar ao carrinho.");
+      }
     }
+  };
 
-    api.post("/produtos", produto)
-      .then((response) => setProdutos([...produtos, response.data]))
-      .catch(() => alert("Erro ao cadastrar produto"))
-  }
-
-  function adicionarItemCarrinho(produtoId: string) {
-    if (!token) {
-      alert("Você precisa estar logado para adicionar produtos ao carrinho!")
-      navigate("/login")
-      return
-    }
-
-    api.post("/adicionarItem", { produtoId, quantidade: 1 })
-      .then(() => alert("Produto adicionado ao carrinho!"))
-      .catch((error) => {
-        if (error.response?.status === 401) {
-          alert("Sessão expirada, faça login novamente.")
-          navigate("/login")
-        } else {
-          alert("Erro ao adicionar produto ao carrinho!")
-        }
-      })
+  // 🔹 Logout
+  function handleLogout() {
+    localStorage.removeItem("token");
+    setToken(null);
   }
 
   return (
-    <>
-      <div className="topo">
-        <button onClick={() => {
-          if (!token) {
-            alert("Faça login para acessar seu carrinho.")
-            navigate("/login")
-          } else {
-            navigate("/carrinho")
-          }
-        }}>
-          🛒 Ver Carrinho
-        </button>
-      </div>
+    <div className="App">
+      <header className="topo">
+        {!token ? (
+          <button onClick={() => navigate("/login")}>🔐 Fazer Login</button>
+        ) : (
+          <>
+            <button onClick={() => navigate("/carrinho")}>🛒 Ver Carrinho</button>
+            <button onClick={handleLogout}>🚪 Sair</button>
+          </>
+        )}
+      </header>
 
-      <h1>Cadastro de Produtos</h1>
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder='Nome' name="nome" />
-        <input type="number" placeholder='Preço' name="preco" />
-        <input type="text" placeholder='Descrição' name="descricao" />
-        <input type="text" placeholder='URL Foto' name="urlfoto" />
-        <button type='submit'>Cadastrar</button>
-      </form>
+      <h1>🍰 Produtos Disponíveis</h1>
 
-      <h1>Lista de produtos</h1>
       <div className="container-produtos">
         {produtos.map((produto) => (
           <div key={produto._id} className="produto">
+            <img src={produto.urlfoto} alt={produto.nome} />
             <h2>{produto.nome}</h2>
-            <img src={produto.urlfoto} alt='Imagem do produto' />
-            <p>Preço: R${produto.preco}</p>
             <p>{produto.descricao}</p>
-            <button onClick={() => adicionarItemCarrinho(produto._id)}>
-              Adicionar ao Carrinho
-            </button>
+            <p><strong>R$ {produto.preco}</strong></p>
+
+            {/* 🔒 Só mostra o botão se estiver logado */}
+            {token && (
+              <button onClick={() => adicionarItemCarrinho(produto._id)}>
+                Adicionar ao Carrinho
+              </button>
+            )}
           </div>
         ))}
       </div>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
