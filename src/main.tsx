@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import Carrinho from './Carrinho'
 import Login from './componentes/login/login.tsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -11,6 +12,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
           <Route path="/" element={<App/>} />
           <Route path="/login" element={<Login/>} />
+          <Route path="/carrinho" element={<Carrinho />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
