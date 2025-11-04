@@ -15,6 +15,14 @@ function App() {
   const [produtos, setProdutos] = useState<ProdutoType[]>([]);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
+  // Campos do novo produto
+  const [novoProduto, setNovoProduto] = useState({
+    nome: "",
+    preco: "",
+    descricao: "",
+    urlfoto: "",
+  });
+
   // 🔹 Atualiza o token quando o usuário faz login/logout
   useEffect(() => {
     const atualizarToken = () => setToken(localStorage.getItem("token"));
@@ -61,6 +69,32 @@ function App() {
     setToken(null);
   }
 
+  // 🔹 Cadastrar novo produto
+  async function cadastrarProduto(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!novoProduto.nome || !novoProduto.preco) {
+      alert("Preencha ao menos o nome e o preço!");
+      return;
+    }
+
+    try {
+      await api.post("/produtos", novoProduto, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Produto cadastrado com sucesso!");
+
+      // Atualiza lista
+      const res = await api.get("/produtos");
+      setProdutos(res.data);
+
+      // Limpa o formulário
+      setNovoProduto({ nome: "", preco: "", descricao: "", urlfoto: "" });
+    } catch (err) {
+      alert("Erro ao cadastrar produto.");
+    }
+  }
+
   return (
     <div className="App">
       <header className="topo">
@@ -75,6 +109,40 @@ function App() {
       </header>
 
       <h1>🍰 Produtos Disponíveis</h1>
+
+      {/* 🔸 Só mostra o formulário de cadastro se estiver logado */}
+      {token && (
+        <div className="cadastro-produto">
+          <h2>📦 Cadastrar Novo Produto</h2>
+          <form onSubmit={cadastrarProduto}>
+            <input
+              type="text"
+              placeholder="Nome"
+              value={novoProduto.nome}
+              onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })}
+            />
+            <input
+              type="number"
+              placeholder="Preço"
+              value={novoProduto.preco}
+              onChange={(e) => setNovoProduto({ ...novoProduto, preco: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="Descrição"
+              value={novoProduto.descricao}
+              onChange={(e) => setNovoProduto({ ...novoProduto, descricao: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="URL da Foto"
+              value={novoProduto.urlfoto}
+              onChange={(e) => setNovoProduto({ ...novoProduto, urlfoto: e.target.value })}
+            />
+            <button type="submit">Cadastrar Produto</button>
+          </form>
+        </div>
+      )}
 
       <div className="container-produtos">
         {produtos.map((produto) => (
